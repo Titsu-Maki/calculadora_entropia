@@ -1,0 +1,851 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Calcula la entropía de una contraseña con la fórmula E = L × log₂(R), compárala con lo que vería un atacante con diccionario y genera frases seguras a partir de diccionarios temáticos en español e inglés.">
+<meta property="og:title" content="Calculadora de Entropía">
+<meta property="og:description" content="Calcula la entropía de una contraseña con la fórmula E = L × log₂(R), compárala con lo que vería un atacante con diccionario y genera frases seguras a partir de diccionarios temáticos en español e inglés.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es_CO">
+<style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<title>Calculadora de Entropía</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Atkinson+Hyperlegible+Next:wght@400;600;700&family=Atkinson+Hyperlegible+Mono:wght@400;600;700&display=swap">
+<style>
+/* Concepto: la tarjeta de consulta ASCII de la clase (rojo y azul marino sobre blanco, columnas con trazo grueso)
+   convertida en instrumento. Lo memorable es el registro de 256 bits; todo lo demás es tarjeta reglada y callada.
+   Alineación a la izquierda. Tipos: Unbounded solo para el título de tarjeta; Atkinson Hyperlegible (Next + Mono)
+   para todo lo demás, porque distingue 0/O e 1/l/I, que es justo lo que importa al leer contraseñas. */
+:root{
+  --desk:#E6E9F2; --paper:#FFFFFF; --ink:#141B3D; --muted:#596190;
+  --navy:#1C2C74; --red:#D3261C; --on-red:#FFFFFF; --on-navy:#FFFFFF;
+  --rule:#1C2C74; --rule-soft:#CBD1E8; --tint:#EEF1FA; --red-tint:#FCEBE9;
+  --crit:#C0261D; --weak:#B5520F; --ok:#846200; --good:#22764A; --vgood:#0B6C77; --max:#1C2C74;
+  --f-card:"Unbounded","Arial Black",system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible Next","Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"Atkinson Hyperlegible Mono",ui-monospace,SFMono-Regular,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --desk:#090C1D; --paper:#11173A; --ink:#E9EDFF; --muted:#9BA4D6;
+    --navy:#B3C2FF; --red:#FF6B5D; --on-red:#1E0703; --on-navy:#0D1230;
+    --rule:#4256A8; --rule-soft:#262F60; --tint:#19214B; --red-tint:#3B1A24;
+    --crit:#FF7A6E; --weak:#F6A25C; --ok:#E8C756; --good:#6DCB8F; --vgood:#58C8D3; --max:#B3C2FF;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --desk:#090C1D; --paper:#11173A; --ink:#E9EDFF; --muted:#9BA4D6;
+  --navy:#B3C2FF; --red:#FF6B5D; --on-red:#1E0703; --on-navy:#0D1230;
+  --rule:#4256A8; --rule-soft:#262F60; --tint:#19214B; --red-tint:#3B1A24;
+  --crit:#FF7A6E; --weak:#F6A25C; --ok:#E8C756; --good:#6DCB8F; --vgood:#58C8D3; --max:#B3C2FF;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--desk);color:var(--ink);font:16px/1.55 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 40px}
+h1,h2,h3{margin:0;text-wrap:balance}
+p{margin:0}
+a{color:var(--navy);text-underline-offset:3px}
+.mono{font-family:var(--f-mono)}
+.muted{color:var(--muted)}
+
+/* Tarjeta */
+.card{max-width:1200px;margin:0 auto;background:var(--paper);border:2px solid var(--rule);border-radius:18px;overflow:hidden}
+.pad{padding:26px clamp(16px,3.2vw,36px)}
+.sec{border-top:2px solid var(--rule)}
+.top{border-bottom:6px double var(--rule)}
+.top-row{display:flex;flex-wrap:wrap;gap:10px 28px;align-items:flex-end;justify-content:space-between}
+h1{font-family:var(--f-card);font-weight:800;color:var(--red);text-transform:uppercase;letter-spacing:.035em;font-size:clamp(27px,5.2vw,58px);line-height:1.02}
+.top nav{display:flex;gap:18px;font-weight:600}
+.top-sub{display:flex;flex-wrap:wrap;gap:8px 32px;justify-content:space-between;margin-top:14px}
+.lede{max-width:62ch;font-size:17px}
+.lede .mono{font-weight:600;color:var(--navy)}
+.privacy{font-size:14px;color:var(--muted);max-width:36ch}
+
+h2{font-family:var(--f-body);font-weight:700;font-size:24px;color:var(--navy);letter-spacing:-.005em}
+h3{font-weight:700;font-size:18px}
+.sec-head{display:flex;flex-wrap:wrap;gap:6px 32px;align-items:baseline;justify-content:space-between}
+.sec-head p{max-width:64ch;color:var(--muted)}
+
+/* Instrumento */
+.inst{display:grid;grid-template-columns:1fr}
+.inst>*{min-width:0}
+@media (min-width:960px){.inst{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)}.inst>.reg-col{border-left:2px solid var(--rule)}}
+@media (max-width:959px){.inst>.reg-col{border-top:2px solid var(--rule)}}
+.inst-main{display:flex;flex-direction:column;gap:20px}
+.lbl{display:block;font-weight:700;font-size:14px;color:var(--navy);margin-bottom:8px}
+.pw-row{display:flex;gap:8px}
+#pw{flex:1;min-width:0;font:600 clamp(18px,2.4vw,24px)/1.25 var(--f-mono);color:var(--ink);background:var(--paper);border:2px solid var(--rule);border-radius:8px;padding:13px 14px}
+#pw:focus{outline:3px solid color-mix(in srgb,var(--red) 45%,transparent);outline-offset:2px}
+.btn{font:700 15px/1 var(--f-body);border-radius:7px;padding:12px 16px;cursor:pointer;border:2px solid var(--rule);background:var(--paper);color:var(--navy)}
+.btn:hover{background:var(--tint)}
+.btn.red{background:var(--red);border-color:var(--red);color:var(--on-red)}
+.btn.red:hover{filter:brightness(1.06)}
+.btn.sm{padding:8px 12px;font-size:14px}
+.btn:focus-visible,.ex:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,a:focus-visible{outline:3px solid color-mix(in srgb,var(--red) 55%,transparent);outline-offset:2px}
+.examples{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:14px;color:var(--muted)}
+.examples>span{margin-right:4px}
+.ex{font:600 14px/1 var(--f-mono);color:var(--navy);background:transparent;border:1.5px solid var(--rule-soft);border-radius:5px;padding:6px 8px;cursor:pointer}
+.ex:hover{border-color:var(--navy)}
+
+.eq{font:600 clamp(21px,3.1vw,33px)/1.25 var(--f-mono);color:var(--navy);overflow-wrap:anywhere}
+.eq .res{color:var(--red);font-weight:700;white-space:nowrap}
+.eq2{font-size:17px;max-width:60ch}
+.eq2 b{font-family:var(--f-mono);color:var(--navy)}
+.st{font-weight:700;color:var(--c);white-space:nowrap}
+.st::before{content:"";display:inline-block;width:.62em;height:.62em;background:var(--c);margin-right:.38em;vertical-align:.02em;border-radius:1px}
+.r-crit{--c:var(--crit)}.r-weak{--c:var(--weak)}.r-ok{--c:var(--ok)}.r-good{--c:var(--good)}.r-vgood{--c:var(--vgood)}.r-max{--c:var(--max)}
+
+/* Rangos ASCII, como la tarjeta */
+.ascii{border:2px solid var(--rule);border-radius:10px;overflow:hidden}
+.ascii-row{display:grid;grid-template-columns:minmax(0,9.5em) minmax(0,6.5em) 1fr auto;gap:12px;align-items:baseline;padding:7px 12px;border-top:1.5px solid var(--rule-soft);font-size:14px;color:var(--muted)}
+.ascii-row:first-child{border-top:0}
+.ascii-row .code{font-family:var(--f-mono);color:var(--navy);opacity:.75}
+.ascii-row .gl{font-family:var(--f-mono);font-weight:700;color:var(--red);opacity:.6}
+.ascii-row .sz{font-family:var(--f-mono);font-weight:700}
+.ascii-row.on{background:var(--tint);color:var(--ink)}
+.ascii-row.on .code,.ascii-row.on .gl{opacity:1}
+.ascii-sum{display:flex;justify-content:space-between;padding:8px 12px;border-top:2px solid var(--rule);font-weight:700;color:var(--navy)}
+.ascii-sum .mono{font-weight:700}
+@media (max-width:560px){.ascii-row{grid-template-columns:1fr auto}.ascii-row .code,.ascii-row .gl{display:none}}
+
+/* Registro de 256 bits */
+.reg-col{display:flex;flex-direction:column;gap:14px}
+.reg{display:grid;grid-template-columns:repeat(16,minmax(0,1fr)) 5.2em;gap:3px;align-items:center;max-width:520px}
+.reg i{aspect-ratio:1;border:1.5px solid var(--rule-soft);border-radius:2px;background:transparent}
+.reg i[data-s="r"]{background:var(--navy);border-color:var(--navy)}
+.reg i[data-s="f"]{border-color:var(--red);background:repeating-linear-gradient(135deg,var(--red) 0 1.5px,transparent 1.5px 4.5px)}
+.reg i.m{box-shadow:3px 0 0 0 var(--red)}
+.reg .rl{font:700 12px/1 var(--f-mono);color:var(--red);padding-left:8px;white-space:nowrap}
+.reg-key{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:14px;color:var(--muted)}
+.reg-key span{display:inline-flex;gap:7px;align-items:center}
+.sw{width:13px;height:13px;border-radius:2px;border:1.5px solid var(--rule-soft);display:inline-block}
+.sw.r{background:var(--navy);border-color:var(--navy)}
+.sw.f{border-color:var(--red);background:repeating-linear-gradient(135deg,var(--red) 0 1.5px,transparent 1.5px 4.5px)}
+.reg-note{font-size:14px;color:var(--muted);max-width:52ch}
+.reg-note b{color:var(--ink)}
+
+/* Lectura reglada */
+.readout{display:grid;grid-template-columns:1fr}
+.readout>*{min-width:0;border-top:2px solid var(--rule)}
+@media (min-width:960px){.readout{grid-template-columns:1fr 1fr}.readout>:nth-child(2n){border-left:2px solid var(--rule)}}
+.readout h3{margin-bottom:12px}
+.calc{font:500 15px/1.85 var(--f-mono);overflow-x:auto}
+.calc div{white-space:nowrap}
+.calc .k{color:var(--muted)}
+.calc .res{color:var(--red);font-weight:700}
+.note{font-size:14px;color:var(--muted);margin-top:10px;max-width:60ch}
+.note b{color:var(--ink)}
+.checks{list-style:none;margin:0;padding:0}
+.checks li{display:grid;grid-template-columns:4.4em 1fr;gap:12px;padding:9px 0;border-top:1.5px solid var(--rule-soft);font-size:15px}
+.checks li:first-child{border-top:0;padding-top:0}
+.checks .v{font-weight:700}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th{text-align:left;font-weight:700;font-size:14px;color:var(--red);padding:0 10px 8px 0;border-bottom:2px solid var(--rule)}
+td{padding:10px 10px 10px 0;border-bottom:1.5px solid var(--rule-soft);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.t{font-family:var(--f-mono);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--navy)}
+td small{display:block;font-family:var(--f-body);font-weight:400;font-size:13px;color:var(--muted);white-space:normal}
+.patterns{display:flex;flex-wrap:wrap;gap:6px}
+.pat{display:flex;flex-direction:column;gap:2px;border:1.5px solid var(--rule-soft);border-radius:6px;padding:7px 10px;min-width:0}
+.pat .tok{font:700 16px/1.2 var(--f-mono);color:var(--navy);word-break:break-all}
+.pat .lab{font-size:13px;color:var(--muted)}
+.pat.bad{border-color:var(--red);background:var(--red-tint)}
+.pat.bad .tok{color:var(--red)}
+.warn{font-weight:700;color:var(--red);margin-bottom:10px}
+
+/* Generador */
+.gen{display:grid;grid-template-columns:1fr}
+.gen>*{min-width:0}
+@media (min-width:960px){.gen{grid-template-columns:380px minmax(0,1fr)}.gen>.results{border-left:2px solid var(--rule)}}
+@media (max-width:959px){.gen>.results{border-top:2px solid var(--rule)}}
+form.controls{display:flex;flex-direction:column;gap:18px}
+fieldset{border:0;margin:0;padding:0;min-width:0}
+legend{padding:0;font-weight:700;font-size:14px;color:var(--navy);margin-bottom:8px}
+.seg{display:inline-flex;border:2px solid var(--rule);border-radius:8px;overflow:hidden;max-width:100%}
+.seg input,.chips input{position:absolute;opacity:0;width:1px;height:1px}
+.seg label{padding:8px 13px;cursor:pointer;font-weight:600;font-size:15px;color:var(--navy);border-left:1.5px solid var(--rule)}
+.seg label:first-of-type{border-left:0}
+.seg input:checked+label{background:var(--navy);color:var(--on-navy)}
+.seg input:focus-visible+label,.chips input:focus-visible+label{outline:3px solid color-mix(in srgb,var(--red) 55%,transparent);outline-offset:-3px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips label{border:1.5px solid var(--rule-soft);border-radius:6px;padding:6px 11px;cursor:pointer;font-size:15px;user-select:none;color:var(--muted)}
+.chips label .n{font-family:var(--f-mono);font-size:12.5px;margin-left:6px}
+.chips input:checked+label{border-color:var(--red);background:var(--red-tint);color:var(--ink);font-weight:600}
+.chips input:checked+label .n{color:var(--red)}
+select,textarea{font:500 15px/1.4 var(--f-body);color:var(--ink);background:var(--paper);border:1.5px solid var(--rule);border-radius:7px;padding:8px 10px;width:100%}
+textarea{font-family:var(--f-mono);resize:vertical;min-height:64px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.two>*{min-width:0}
+@media (max-width:520px){.two{grid-template-columns:1fr}}
+.chk{display:flex;gap:9px;align-items:center;font-size:15px;cursor:pointer}
+.chk input{accent-color:var(--red);width:17px;height:17px}
+.dict{font-size:14px;color:var(--muted);border-top:1.5px solid var(--rule-soft);padding-top:12px}
+.dict b{font-family:var(--f-mono);color:var(--navy)}
+.results{display:flex;flex-direction:column}
+.why{display:grid;gap:12px;grid-template-columns:1fr;font-size:15px;color:var(--muted);padding-bottom:18px}
+@media (min-width:760px){.why{grid-template-columns:1fr 1fr}}
+.why b{color:var(--ink)}
+.why .mono{color:var(--navy);font-weight:600}
+.err{color:var(--red);font-weight:700}
+.rows{list-style:none;margin:0;padding:0;border-top:2px solid var(--rule)}
+.rows li{padding:16px 0;border-bottom:1.5px solid var(--rule-soft);display:flex;flex-direction:column;gap:8px}
+.rows li:last-child{border-bottom:0;padding-bottom:0}
+.g-pw{font:700 clamp(17px,2vw,21px)/1.35 var(--f-mono);word-break:break-all}
+.g-pw .w1{color:var(--navy)}
+.g-pw .w2{color:var(--red)}
+.g-pw .c{color:var(--muted);font-weight:400}
+.g-pw .x{color:var(--ink);text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}
+.g-meta{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:14px;align-items:baseline}
+.g-foot{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between}
+.btns{display:flex;gap:6px}
+details{font-size:14px;color:var(--muted)}
+summary{cursor:pointer;font-weight:600;color:var(--navy)}
+details ul{margin:8px 0 0;padding-left:18px;font-family:var(--f-mono);font-size:13.5px}
+
+/* Referencias */
+.refs td:first-child{width:40%}
+.refs a{font-weight:700}
+.refs .host{display:block;font-family:var(--f-mono);font-size:13px;color:var(--muted)}
+.refs td{font-size:15px}
+@media (max-width:640px){.refs td{display:block;width:auto!important;padding:4px 0;border:0}.refs tr{display:block;padding:10px 0;border-bottom:1.5px solid var(--rule-soft)}}
+
+.foot{font-size:14px;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--navy);color:var(--on-navy);padding:10px 18px;border-radius:8px;font-weight:700;font-size:15px;z-index:20}
+</style>
+</head>
+<body>
+<div class="card">
+  <header class="top pad">
+    <div class="top-row">
+      <h1>Calculadora de Entropía</h1>
+      <nav aria-label="Secciones"><a href="#analizar">Analizar</a><a href="#generar">Generar</a><a href="#referencias">Referencias</a></nav>
+    </div>
+    <div class="top-sub">
+      <p class="lede">Cuenta los bits de una contraseña con <span class="mono">E = L × log₂(R)</span>, compáralos con lo que vería un atacante y genera frases fáciles de recordar.</p>
+      <p class="privacy">Todo se calcula en este navegador. La contraseña no se envía a ningún sitio.</p>
+    </div>
+  </header>
+
+  <section id="analizar">
+    <div class="inst">
+      <div class="inst-main pad">
+        <div>
+          <label class="lbl" for="pw">Escribe o pega una contraseña</label>
+          <div class="pw-row">
+            <input id="pw" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" value="Contr4señaULTRAdificil">
+            <button class="btn" id="toggle" type="button" aria-pressed="false">Ocultar</button>
+          </div>
+        </div>
+        <div class="examples" id="examples"><span>Ejemplos:</span></div>
+        <p class="eq" id="eq" aria-live="polite"></p>
+        <p class="eq2" id="eq2"></p>
+        <div>
+          <div class="lbl">Rangos de la tabla ASCII que usa</div>
+          <div class="ascii" id="ascii"></div>
+        </div>
+      </div>
+      <div class="reg-col pad">
+        <div>
+          <h2>Registro de 256 bits</h2>
+          <p class="note" style="margin-top:4px">Cada casilla es un bit, 16 por fila. Las marcas rojas son los niveles de la clase.</p>
+        </div>
+        <div class="reg" id="reg" role="img" aria-label="Registro de bits"></div>
+        <div class="reg-key">
+          <span><i class="sw r"></i>Bits que resisten a un atacante con diccionario</span>
+          <span><i class="sw f"></i>Bits que solo promete la fórmula</span>
+        </div>
+        <p class="reg-note" id="regNote"></p>
+      </div>
+    </div>
+
+    <div class="readout">
+      <div class="pad">
+        <h3>Cálculo paso a paso</h3>
+        <div class="calc" id="calc"></div>
+        <p class="note">Con calculadora, <b>log₂(R) = log(R) ÷ 0,30103</b>. Frente a un computador cuántico (algoritmo de Grover) los bits efectivos son la mitad: <b id="grover"></b>.</p>
+      </div>
+      <div class="pad">
+        <h3>Lista de verificación</h3>
+        <ul class="checks" id="checks"></ul>
+      </div>
+      <div class="pad">
+        <h3>Tiempo para probar todas las combinaciones</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Escenario</th><th>Fórmula</th><th>Realista</th></tr></thead>
+            <tbody id="times"></tbody>
+          </table>
+        </div>
+        <p class="note">Peor caso para el atacante, igual que la tabla de Hive Systems.</p>
+      </div>
+      <div class="pad">
+        <h3>Lo que un atacante probaría primero</h3>
+        <p class="warn" id="warn" hidden></p>
+        <div class="patterns" id="patterns"></div>
+        <p class="note" id="engineNote"></p>
+      </div>
+    </div>
+  </section>
+
+  <section id="generar" class="sec">
+    <div class="pad sec-head" style="padding-bottom:0">
+      <h2>Generador ULTRAcreativo</h2>
+      <p>Seleccione los temas que le interesen para recordar mas facilmente una posible contraseña, o simplemente escriba las palabras que le gustaria combinar separadas por una coma (,). </p>
+    </div>
+    <div class="gen">
+      <form class="controls pad" id="genForm">
+        <fieldset>
+          <legend>Idioma</legend>
+          <div class="seg">
+            <input type="radio" name="lang" id="lang-es" value="es"><label for="lang-es">Español</label>
+            <input type="radio" name="lang" id="lang-en" value="en"><label for="lang-en">Inglés</label>
+            <input type="radio" name="lang" id="lang-mix" value="mix" checked><label for="lang-mix">Mixto</label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Temas</legend>
+          <div class="chips" id="themeChips"></div>
+        </fieldset>
+        <fieldset>
+          <legend><label for="custom">Tus propias palabras</label></legend>
+          <textarea id="custom" placeholder="cucuta, tamal, kawasaki, ciberseguridad"></textarea>
+        </fieldset>
+        <div class="two">
+          <fieldset>
+            <legend><label for="struct">Estructura</label></legend>
+            <select id="struct">
+              <option value="start" selected>Inicio + palabras</option>
+              <option value="conn">Con conectores</option>
+              <option value="words">Solo palabras</option>
+            </select>
+          </fieldset>
+          <fieldset>
+            <legend><label for="caseSel">Mayúsculas</label></legend>
+            <select id="caseSel">
+              <option value="alt" selected>Alternadas</option>
+              <option value="title">Inicial</option>
+              <option value="rand">Al azar</option>
+              <option value="lower">Ninguna</option>
+            </select>
+          </fieldset>
+          <fieldset>
+            <legend><label for="sepSel">Separador</label></legend>
+            <select id="sepSel">
+              <option value="" selected>Ninguno</option>
+              <option value="-">Guion</option>
+              <option value=".">Punto</option>
+              <option value="_">Guion bajo</option>
+              <option value="rand">Símbolo al azar</option>
+            </select>
+          </fieldset>
+          <fieldset>
+            <legend><label for="digSel">Números al final</label></legend>
+            <select id="digSel">
+              <option value="0">Ninguno</option>
+              <option value="2" selected>2 dígitos</option>
+              <option value="3">3 dígitos</option>
+              <option value="4">4 dígitos</option>
+            </select>
+          </fieldset>
+        </div>
+        <label class="chk"><input type="checkbox" id="symChk" checked> Agregar un símbolo al final</label>
+        <div class="two">
+          <fieldset>
+            <legend><label for="nSel">Palabras</label></legend>
+            <select id="nSel">
+              <option value="auto" selected>Según el objetivo</option>
+              <option value="2">2</option><option value="3">3</option><option value="4">4</option>
+              <option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option>
+            </select>
+          </fieldset>
+          <fieldset>
+            <legend>Objetivo en bits</legend>
+            <div class="seg">
+              <input type="radio" name="target" id="t60" value="60" checked><label for="t60">60</label>
+              <input type="radio" name="target" id="t80" value="80"><label for="t80">80</label>
+              <input type="radio" name="target" id="t128" value="128"><label for="t128">128</label>
+            </div>
+          </fieldset>
+        </div>
+        <p class="dict" id="dictInfo"></p>
+        <div><button class="btn red" type="submit">Generar 6 contraseñas</button></div>
+      </form>
+
+      <div class="results pad">
+        <div class="why">
+          <p><b>¿Por qué dos cifras?</b> La fórmula <span class="mono">L × log₂(R)</span> supone que cada carácter salió al azar. Una frase tiene muchas letras, así que la fórmula da un número muy alto.</p>
+          <p>Si el atacante conoce el generador, cada palabra vale <span class="mono">log₂(N)</span> bits, con N el tamaño del diccionario. <b>La cifra del generador es la honesta.</b> Agregar palabras rinde más que cambiar letras.</p>
+        </div>
+        <p class="err" id="genErr" hidden></p>
+        <ul class="rows" id="cands"></ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="referencias" class="sec">
+    <div class="pad">
+      <div class="sec-head" style="margin-bottom:16px">
+        <h2>Referencias</h2>
+        <p>Sitios de interes para conocer mas acerca de como reforzar sus contraseñas.</p>
+      </div>
+      <div class="tbl-wrap">
+        <table class="refs">
+          <thead><tr><th>Sitio</th><th>acerca de</th></tr></thead>
+          <tbody id="refs"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <footer class="sec pad foot">Hacking Defensivo, Ingeniería de Sistemas. Herramienta educativa: los tiempos son estimaciones y no reemplazan consultar si la contraseña ya apareció en una filtración.</footer>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/zxcvbn/4.4.2/zxcvbn.js"></script>
+<script>
+(function(){
+'use strict';
+var $ = function(s){return document.querySelector(s);};
+var LOG2_10 = Math.log2(10);
+var REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+function fmt(n,d){ if(d===undefined)d=2; return n.toLocaleString('es-CO',{minimumFractionDigits:d,maximumFractionDigits:d}); }
+function esc(s){ return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+
+/* ---------- Diccionarios temáticos ---------- */
+var THEMES = {
+  cocina:{label:'Cocina',
+    es:'sarten olla cuchara tenedor cuchillo horno estufa licuadora arepa arroz frijol platano aguacate cebolla tomate ajo cilantro pimienta canela azucar harina mantequilla queso huevo pan sopa caldo sancocho ajiaco empanada tamal delantal receta especias batidora cucharon rallador tetera tostadora panqueque buñuelo natilla limon miel vainilla mostaza galleta ponque chocolate mazorca yuca papa',
+    en:'skillet pot spoon fork knife oven stove blender rice beans plantain avocado onion tomato garlic cilantro pepper cinnamon sugar flour butter cheese egg bread soup broth apron recipe spices whisk ladle grater kettle toaster pancake waffle noodle dumpling burrito taco lemon honey vanilla mustard ketchup pickle cookie muffin brownie bacon'},
+  motos:{label:'Motos',
+    es:'moto casco piñon cadena cilindro piston bujia embrague freno llanta rin manubrio acelerador carburador exosto tanque gasolina chaqueta guantes rodillera motor caballos cilindraje pedal pata sillin amortiguador suspension radiador aceite filtro velocimetro tacometro cambio neutro curva ruta carretera rodada motero caballito enduro motocross scooter espejo farol guardabarro inyeccion bobina',
+    en:'motorbike helmet chain sprocket piston sparkplug clutch brake tire wheel handlebar throttle carburetor exhaust tank fuel jacket gloves engine horsepower kickstand saddle shock radiator oil filter speedometer gear neutral corner highway ride rider wheelie enduro scooter chopper cruiser sidecar mudguard headlight mirror odometer superbike motocross trail garage wrench'},
+  seguridad:{label:'Seguridad informática',
+    es:'seguridad informatica firewall cifrado clave llave hash servidor red puerto malware virus gusano troyano phishing auditoria bitacora respaldo token certificado firma boveda candado escudo alerta parche kernel protocolo proxy router sandbox honeypot entropia algoritmo sesion usuario acceso permiso politica privacidad criptografia biometria huella autenticador incidente forense perimetro hacker',
+    en:'security firewall cipher encryption key hash server network port malware virus worm trojan phishing audit logbook backup token certificate signature vault padlock shield alert patch kernel protocol proxy router sandbox honeypot entropy algorithm session user access permission policy privacy cryptography biometric fingerprint authenticator incident forensics perimeter exploit payload'},
+  futbol:{label:'Fútbol',
+    es:'futbol balon arco porteria gol penal tarjeta arbitro cancha estadio tribuna hincha camiseta guayos delantero defensa volante portero capitan tecnico pase regate chilena cabezazo tiro corner saque remate golazo liga copa final clasico barra bandera silbato marcador empate victoria derrota campeon mundial seleccion medio banca suplente travesaño',
+    en:'football soccer ball goal penalty card referee pitch stadium fan jersey cleats striker defender midfielder goalkeeper captain coach pass dribble header shot corner throwin volley league cup final derby flag whistle scoreboard draw victory champion worldcup tackle offside assist kickoff halftime overtime trophy bench substitute crossbar'},
+  naturaleza:{label:'Naturaleza',
+    es:'montaña rio lago mar playa bosque selva paramo frailejon nevado volcan cascada nube lluvia trueno relampago viento arcoiris sol luna estrella cometa roca arena desierto valle colina pradera flor orquidea roble palma cedro musgo helecho semilla raiz hoja rama tormenta niebla rocio aurora glaciar isla laguna manantial cueva',
+    en:'mountain river lake ocean beach forest jungle glacier volcano waterfall cloud rain thunder lightning wind rainbow sun moon star comet rock sand desert valley hill meadow flower orchid oak palm cedar moss fern seed root leaf branch storm fog dew aurora island lagoon spring cave canyon reef tide'},
+  animales:{label:'Animales',
+    es:'condor jaguar oso perezoso tucan colibri delfin ballena tiburon pulpo tortuga iguana rana buho aguila halcon loro guacamaya mono chiguiro danta armadillo zorro lobo gato perro caballo vaca oveja cabra conejo raton ardilla pinguino flamenco cocodrilo caiman serpiente abeja hormiga mariposa libelula escarabajo cangrejo medusa leon tigre elefante jirafa cebra',
+    en:'condor jaguar bear sloth toucan hummingbird dolphin whale shark octopus turtle iguana frog owl eagle falcon parrot macaw monkey capybara tapir armadillo fox wolf cat dog horse cow sheep goat rabbit mouse squirrel penguin flamingo crocodile snake bee ant butterfly dragonfly beetle crab jellyfish lion tiger elephant giraffe zebra panda'},
+  musica:{label:'Música',
+    es:'guitarra bajo bateria piano violin trompeta saxofon flauta acordeon tiple bandola maracas tambor guacharaca cumbia vallenato salsa rock jazz bolero bambuco joropo champeta reggaeton cancion melodia ritmo acorde nota escala compas coro estrofa concierto tarima parlante audifonos microfono vinilo disco banda orquesta solista partitura metronomo afinador pua cuerda',
+    en:'guitar bass drums piano violin trumpet saxophone flute accordion banjo ukulele harmonica tambourine cello rock jazz blues funk reggae metal song melody rhythm chord note scale tempo chorus verse concert stage speaker headphones microphone vinyl record band orchestra soloist sheet metronome tuner pick string amplifier playlist encore ballad'},
+  viajes:{label:'Viajes y Colombia',
+    es:'bogota medellin cali cucuta cartagena barranquilla santamarta pasto manizales pereira armenia bucaramanga villavicencio leticia guatape salento tayrona amazonas caribe pacifico andes llanos cordillera mochila maleta pasaporte tiquete aeropuerto terminal bus chiva finca hostal mapa brujula ruta viaje aventura mirador sendero carpa fogata linterna cafe cacao panela ruana sombrero vueltiao',
+    en:'passport ticket airport suitcase backpack compass map journey adventure hostel cabin tent campfire flashlight trail viewpoint cruise ferry train subway taxi highway bridge harbor lighthouse castle museum market plaza village city island coast border souvenir postcard camera sunrise sunset roadtrip layover boarding luggage visa tourist explorer coffee cocoa'}
+};
+var STARTERS = {
+  es:['me gusta la','me gusta el','amo la','amo el','mi','tu','quiero','sueño con','viva la','yo tengo'],
+  en:['i love','i like','my','your','i want','dream of','long live','i have']
+};
+var CONNECT = {
+  es:['y','con','de','sin','para','en','la','el','un','una','por','o'],
+  en:['and','with','of','for','in','the','a','on','or','to']
+};
+var SYMS = '!@#$%&*+=?-_.:;~'.split(''); // 16 símbolos = 4 bits
+
+function norm(w){ return w.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]/g,''); }
+function words(str){ return str.split(/\s+/).map(norm).filter(Boolean); }
+function normPhrase(p){ return p.split(' ').map(norm).join(' '); }
+['es','en'].forEach(function(l){ STARTERS[l]=STARTERS[l].map(normPhrase); CONNECT[l]=CONNECT[l].map(norm); });
+
+var ALL_WORDS = (function(){
+  var s = new Set();
+  /* conectores primero: son las palabras más comunes y un atacante las probaría antes */
+  ['es','en'].forEach(function(l){ STARTERS[l].concat(CONNECT[l]).join(' ').split(' ').forEach(function(w){ if(w) s.add(w); }); });
+  Object.keys(THEMES).forEach(function(k){ ['es','en'].forEach(function(l){ words(THEMES[k][l]).forEach(function(w){ s.add(w); }); }); });
+  return Array.from(s);
+})();
+var ALL_SET = new Set(ALL_WORDS);
+
+/* ---------- Aleatoriedad criptográfica sin sesgo ---------- */
+function randInt(n){
+  var a = new Uint32Array(1), lim = Math.floor(4294967296 / n) * n, x;
+  do { crypto.getRandomValues(a); x = a[0]; } while (x >= lim);
+  return x % n;
+}
+function pick(arr){ return arr[randInt(arr.length)]; }
+
+/* ---------- Fórmula ---------- */
+var CLASSES = [
+  {id:'d', label:'Números', code:'48–57', gl:'0 1 2 3', size:10, re:/[0-9]/},
+  {id:'l', label:'Minúsculas', code:'97–122', gl:'a b c d', size:26, re:/[a-z]/},
+  {id:'u', label:'Mayúsculas', code:'65–90', gl:'A B C D', size:26, re:/[A-Z]/},
+  {id:'s', label:'Símbolos', code:'33–47, 58–64, 91–96, 123–126', gl:'! @ % $', size:32, re:/[!-\/:-@\[-`{-~]/},
+  {id:'sp', label:'Espacio', code:'32', gl:'␠', size:1, re:/ /},
+  {id:'x', label:'Extendidos', code:'128–255', gl:'ñ á ü Ç', size:128, re:/[^\x20-\x7E]/}
+];
+function classEntropy(pw){
+  var L = Array.from(pw).length;
+  var used = CLASSES.filter(function(c){ return c.re.test(pw); });
+  var R = used.reduce(function(a,c){ return a + c.size; }, 0);
+  var lg = R > 1 ? Math.log2(R) : 0;
+  return {L:L, R:R, used:used, lg:lg, E:L*lg};
+}
+
+var BANDS = [
+  {min:256, key:'max',   label:'máxima seguridad', use:'llega al nivel de 256 bits'},
+  {min:128, key:'vgood', label:'muy fuerte', use:'apta para claves criptográficas'},
+  {min:80,  key:'good',  label:'fuerte', use:'apta para banco y correo'},
+  {min:60,  key:'ok',    label:'aceptable', use:'sirve solo para cuentas online'},
+  {min:40,  key:'weak',  label:'débil', use:'no llega a los 60 bits de una cuenta online'},
+  {min:0,   key:'crit',  label:'muy débil', use:'se rompe muy rápido'}
+];
+function rate(b){ for(var i=0;i<BANDS.length;i++) if(b>=BANDS[i].min) return BANDS[i]; return BANDS[BANDS.length-1]; }
+function stHTML(b, text){ var r=rate(b); return '<span class="st r-'+r.key+'">'+(text||cap(r.label))+'</span>'; }
+function cap(t){ return t.charAt(0).toUpperCase()+t.slice(1); }
+
+/* ---------- Tiempos ---------- */
+var LOG10_YEAR = Math.log10(31557600);
+var SUP = '⁰¹²³⁴⁵⁶⁷⁸⁹';
+function sup(n){ return String(n).split('').map(function(c){ return SUP[+c]; }).join(''); }
+function plural(n,a,b){ return n.toLocaleString('es-CO') + ' ' + (n===1?a:b); }
+function humanTime(l10){
+  if(!isFinite(l10) || l10 < 0) return 'Instantáneo';
+  var s = Math.pow(10, l10);
+  if(s < 60) return plural(Math.max(1,Math.round(s)),'segundo','segundos');
+  if(s < 3600) return plural(Math.round(s/60),'minuto','minutos');
+  if(s < 86400) return plural(Math.round(s/3600),'hora','horas');
+  if(s < 86400*30.44) return plural(Math.round(s/86400),'día','días');
+  if(s < 31557600) return plural(Math.round(s/2629800),'mes','meses');
+  var ly = l10 - LOG10_YEAR;
+  if(ly < 3) return plural(Math.round(Math.pow(10,ly)),'año','años');
+  if(ly >= 24){ var e=Math.floor(ly), m=Math.pow(10,ly-e); if(m>=9.95){m=1;e++;} return fmt(m,1)+' × 10'+sup(e)+' años'; }
+  var U = [[18,'trillones de años'],[12,'billones de años'],[9,'mil millones de años'],[6,'millones de años'],[3,'mil años']];
+  for(var i=0;i<U.length;i++){ if(ly >= U[i][0]){ var v=Math.pow(10, ly-U[i][0]); return (v<10?fmt(v,1):Math.round(v).toLocaleString('es-CO'))+' '+U[i][1]; } }
+}
+var UNIVERSE_LOG10_Y = Math.log10(1.38e10);
+var SCEN = [
+  {name:'Ataque online', d:'1.000 intentos por segundo, el escenario de xkcd 936', rate:1e3},
+  {name:'Hash lento bcrypt', d:'16 tarjetas RTX 5090, unos 140.000 intentos por segundo, calibrado con Hive Systems 2026', rate:1.4e5},
+  {name:'Referencia TecnoCrypter', d:'Mil millones de intentos por segundo', rate:1e9},
+  {name:'Hash rápido MD5', d:'16 tarjetas RTX 5090, unos 3,5 billones de intentos por segundo (estimado)', rate:3.5e12}
+];
+function timeCell(bits, rateV){
+  var l10 = bits*Math.log10(2) - Math.log10(rateV);
+  var ly = l10 - LOG10_YEAR;
+  return '<td class="t">'+humanTime(l10)+(ly > UNIVERSE_LOG10_Y ? '<small>más que la edad del universo</small>' : '')+'</td>';
+}
+
+/* ---------- Estimación realista ---------- */
+var USER_INPUTS = ALL_WORDS;
+var HAS_ZX = typeof window.zxcvbn === 'function';
+var TR = {
+  'Straight rows of keys are easy to guess':'Las filas seguidas del teclado son fáciles de adivinar.',
+  'Short keyboard patterns are easy to guess':'Los patrones cortos de teclado son fáciles de adivinar.',
+  'Repeats like "aaa" are easy to guess':'Las repeticiones como "aaa" son fáciles de adivinar.',
+  'Repeats like "abcabcabc" are only slightly harder to guess than "abc"':'Repetir un bloque como "abcabcabc" casi no suma dificultad.',
+  'Sequences like abc or 6543 are easy to guess':'Las secuencias como abc o 6543 son fáciles de adivinar.',
+  'Recent years are easy to guess':'Los años recientes son fáciles de adivinar.',
+  'Dates are often easy to guess':'Las fechas suelen ser fáciles de adivinar.',
+  'This is a top-10 common password':'Es una de las 10 contraseñas más usadas del mundo.',
+  'This is a top-100 common password':'Es una de las 100 contraseñas más usadas del mundo.',
+  'This is a very common password':'Es una contraseña muy común.',
+  'This is similar to a commonly used password':'Se parece a una contraseña muy usada.',
+  'A word by itself is easy to guess':'Una palabra sola es fácil de adivinar.',
+  'Names and surnames by themselves are easy to guess':'Un nombre o apellido solo es fácil de adivinar.',
+  'Common names and surnames are easy to guess':'Los nombres y apellidos comunes son fáciles de adivinar.'
+};
+var DICT_NAMES = {passwords:'contraseña común', english_wikipedia:'palabra en inglés', us_tv_and_film:'palabra de TV y cine', surnames:'apellido', male_names:'nombre propio', female_names:'nombre propio', user_inputs:'palabra del diccionario ES/EN'};
+var BAD = {spatial:1, repeat:1, sequence:1, regex:1, date:1};
+function labelFor(m){
+  var t;
+  switch(m.pattern){
+    case 'dictionary':
+      t = DICT_NAMES[m.dictionary_name] || 'palabra de diccionario';
+      if(m.l33t) t += ' con leet';
+      if(m.reversed) t += ' al revés';
+      break;
+    case 'spatial': t='patrón de teclado'; break;
+    case 'repeat': t='repetición'; break;
+    case 'sequence': t='secuencia'; break;
+    case 'regex': t='año reciente'; break;
+    case 'date': t='fecha'; break;
+    default: t='caracteres al azar';
+  }
+  return t;
+}
+function realistic(pw){
+  if(!pw) return {bits:0, parts:[], warning:''};
+  if(HAS_ZX){
+    var r = window.zxcvbn(pw.slice(0,100), USER_INPUTS);
+    var bits = r.guesses_log10 * Math.log2(10);
+    if(pw.length > 100) bits += classEntropy(pw.slice(100)).E;
+    var parts = r.sequence.map(function(m){
+      return {token:m.token, label:labelFor(m), bits:Math.log2(Math.max(m.guesses||1,1)),
+              bad: !!BAD[m.pattern] || (m.pattern==='dictionary' && m.dictionary_name==='passwords')};
+    });
+    var w = r.feedback && r.feedback.warning ? (TR[r.feedback.warning] || r.feedback.warning) : '';
+    return {bits:bits, parts:parts, warning:w};
+  }
+  return fallback(pw);
+}
+function fallback(pw){
+  var N = ALL_WORDS.length, low = pw.toLowerCase(), parts=[], bits=0, i=0, buf='';
+  function flush(){ if(buf){ var ce=classEntropy(buf); parts.push({token:buf,label:'caracteres al azar',bits:ce.E}); bits+=ce.E; buf=''; } }
+  while(i < low.length){
+    var rest = low.slice(i), yr = /^(19|20)\d\d/.exec(rest);
+    if(yr){ flush(); var yb=Math.log2(120); parts.push({token:pw.substr(i,4),label:'año',bits:yb,bad:true}); bits+=yb; i+=4; continue; }
+    var found = 0;
+    for(var l=Math.min(16,rest.length); l>=2; l--){ if(ALL_SET.has(rest.substr(0,l))){ found=l; break; } }
+    if(found){ flush(); var tok=pw.substr(i,found), b=Math.log2(N)+(tok===tok.toLowerCase()?0:1); parts.push({token:tok,label:'palabra del diccionario ES/EN',bits:b}); bits+=b; i+=found; continue; }
+    buf += pw[i]; i++;
+  }
+  flush();
+  return {bits:bits, parts:parts, warning:''};
+}
+
+/* ---------- Registro de 256 bits ---------- */
+var reg = $('#reg'), cells = [];
+var ROW_MARK = {3:'60', 4:'80', 7:'128', 15:'256'};
+var CELL_MARK = {59:1, 79:1, 127:1, 255:1};
+for(var r=0;r<16;r++){
+  for(var c=0;c<16;c++){
+    var idx = r*16+c, el = document.createElement('i');
+    if(CELL_MARK[idx]) el.className='m';
+    reg.appendChild(el); cells.push(el);
+  }
+  var lab = document.createElement('span'); lab.className='rl'; lab.textContent = ROW_MARK[r] ? ROW_MARK[r]+' bits' : '';
+  reg.appendChild(lab);
+}
+var regAnim = 0;
+function paint(real, form, upto){
+  var nr = Math.round(real), nf = Math.round(form);
+  for(var i=0;i<256;i++){
+    var s = i >= upto ? '' : (i < nr ? 'r' : (i < nf ? 'f' : ''));
+    if(cells[i].dataset.s !== s) cells[i].dataset.s = s;
+  }
+}
+function setRegister(real, form, animate){
+  cancelAnimationFrame(regAnim);
+  if(!animate || REDUCED){ paint(real, form, 256); return; }
+  var k = 0;
+  (function step(){ k += 6; paint(real, form, k); if(k < 256) regAnim = requestAnimationFrame(step); })();
+}
+
+/* ---------- Analizador ---------- */
+var pwInput = $('#pw');
+['Era_gol_de_yepes_hp','no.sea.tan.toche.mano','micuchurrumin','sixseven67','Colombia2026*','123456'].forEach(function(e){
+  var b=document.createElement('button'); b.type='button'; b.className='ex'; b.textContent=e;
+  b.addEventListener('click', function(){ pwInput.value=e; analyze(); });
+  $('#examples').appendChild(b);
+});
+$('#toggle').addEventListener('click', function(){
+  var hide = pwInput.type === 'text';
+  pwInput.type = hide ? 'password' : 'text';
+  this.textContent = hide ? 'Mostrar' : 'Ocultar';
+  this.setAttribute('aria-pressed', hide ? 'true' : 'false');
+});
+
+function analyze(first){
+  var pw = pwInput.value, ce = classEntropy(pw), re = realistic(pw);
+
+  if(!pw){
+    $('#eq').innerHTML = 'E = L × log₂(R)';
+    $('#eq2').textContent = 'Escribe una contraseña para ver sus bits.';
+  } else {
+    $('#eq').innerHTML = 'E = '+ce.L+' × log₂('+ce.R+') = <span class="res">'+fmt(ce.E,2)+' bits</span>';
+    $('#eq2').innerHTML = 'Según la fórmula: '+stHTML(ce.E)+', '+rate(ce.E).use+'. Un atacante con diccionario la estima en <b>'+fmt(re.bits,1)+' bits</b>: '+stHTML(re.bits, rate(re.bits).label)+'.';
+  }
+
+  $('#ascii').innerHTML = CLASSES.map(function(c){
+    var on = ce.used.indexOf(c) > -1;
+    return '<div class="ascii-row'+(on?' on':'')+'"><span class="code">'+c.code+'</span><span class="gl">'+c.gl+'</span><span>'+c.label+'</span><span class="sz">'+c.size+'</span></div>';
+  }).join('') + '<div class="ascii-sum"><span>R, la suma de los rangos usados</span><span class="mono">'+ce.R+'</span></div>';
+
+  setRegister(re.bits, ce.E, first);
+  var over = ce.E - 256;
+  $('#regNote').innerHTML = !pw ? '' :
+    '<b>'+Math.round(Math.min(re.bits,256))+'</b> casillas llenas y <b>'+Math.max(0,Math.round(Math.min(ce.E,256))-Math.round(re.bits))+'</b> rayadas.'
+    + (over > 0 ? ' La fórmula da '+fmt(ce.E,1)+' bits: '+fmt(over,1)+' no caben en el registro.' : '');
+
+  var rLine = ce.used.length ? ce.used.map(function(c){return c.size;}).join(' + ') + ' = ' + ce.R : '0';
+  var calc = '<div><span class="k">L =</span> '+ce.L+' caracteres</div><div><span class="k">R =</span> '+rLine+'</div>';
+  if(ce.R > 1){
+    calc += '<div><span class="k">log₂('+ce.R+') =</span> '+fmt(Math.log10(ce.R),4)+' ÷ 0,30103 = '+fmt(ce.lg,4)+'</div>';
+    calc += '<div><span class="k">E =</span> '+ce.L+' × '+fmt(ce.lg,4)+' = <span class="res">'+fmt(ce.E,2)+' bits</span></div>';
+  } else calc += '<div><span class="k">E =</span> <span class="res">0 bits</span></div>';
+  $('#calc').innerHTML = calc;
+  $('#grover').textContent = fmt(ce.E/2,1)+' bits según la fórmula y '+fmt(re.bits/2,1)+' según la estimación realista';
+
+  $('#times').innerHTML = SCEN.map(function(s){
+    return '<tr><td>'+s.name+'<small>'+s.d+'</small></td>'+timeCell(ce.E,s.rate)+timeCell(re.bits,s.rate)+'</tr>';
+  }).join('');
+
+  $('#engineNote').textContent = HAS_ZX
+    ? 'Análisis con zxcvbn, el medidor de Dropbox, más los diccionarios en español e inglés de esta página. Cada bloque muestra los bits que aporta.'
+    : 'No se pudo cargar zxcvbn, así que se usa un analizador local con los diccionarios de esta página.';
+  var w = $('#warn'); w.hidden = !re.warning; w.textContent = re.warning || '';
+  $('#patterns').innerHTML = re.parts.map(function(p){
+    return '<div class="pat'+(p.bad?' bad':'')+'"><span class="tok">'+esc(p.token)+'</span><span class="lab">'+p.label+', '+fmt(p.bits,1)+' bits</span></div>';
+  }).join('');
+
+  var badPat = re.parts.some(function(p){ return p.bad; });
+  var checks = [
+    [ce.L >= 15, 'Al menos 15 caracteres, el mínimo de NIST SP 800-63B Rev. 4 cuando la contraseña es el único factor. Tiene '+ce.L+'.'],
+    [re.bits >= 80, 'Estimación realista de 80 bits o más, el nivel de la clase para banco y correo.'],
+    [!badPat && pw.length>0, 'Sin contraseñas comunes, años, fechas, secuencias ni patrones de teclado.'],
+    [ce.used.length >= 3, 'Mezcla tres o más rangos de caracteres, lo que sube R en la fórmula.']
+  ];
+  $('#checks').innerHTML = checks.map(function(c){
+    return '<li><span class="v st '+(c[0]?'r-good':'r-crit')+'">'+(c[0]?'Cumple':'Falta')+'</span><span>'+c[1]+'</span></li>';
+  }).join('');
+}
+var tmr;
+pwInput.addEventListener('input', function(){ clearTimeout(tmr); tmr = setTimeout(analyze, 80); });
+
+/* ---------- Generador ---------- */
+var chipBox = $('#themeChips');
+Object.keys(THEMES).forEach(function(k){
+  var inp=document.createElement('input'); inp.type='checkbox'; inp.id='th-'+k; inp.value=k; inp.checked=false;
+  var lab=document.createElement('label'); lab.htmlFor='th-'+k; lab.innerHTML=THEMES[k].label+'<span class="n" data-n="'+k+'"></span>';
+  chipBox.appendChild(inp); chipBox.appendChild(lab);
+});
+function opts(){
+  return {
+    lang: document.querySelector('input[name="lang"]:checked').value,
+    themes: Array.from(chipBox.querySelectorAll('input:checked')).map(function(i){return i.value;}),
+    custom: words($('#custom').value.replace(/[,;]+/g,' ')),
+    struct: $('#struct').value, kase: $('#caseSel').value, sep: $('#sepSel').value,
+    digits: +$('#digSel').value, sym: $('#symChk').checked, n: $('#nSel').value,
+    target: +document.querySelector('input[name="target"]:checked').value
+  };
+}
+function langs(l){ return l==='mix' ? ['es','en'] : [l]; }
+function dictFor(o){
+  var s = new Set();
+  o.themes.forEach(function(t){ langs(o.lang).forEach(function(l){ words(THEMES[t][l]).forEach(function(w){ s.add(w); }); }); });
+  o.custom.forEach(function(w){ if(w.length>=2) s.add(w); });
+  return Array.from(s);
+}
+function startersFor(o){ var a=[]; langs(o.lang).forEach(function(l){ a=a.concat(STARTERS[l]); }); return a; }
+function connFor(o){ var a=[]; langs(o.lang).forEach(function(l){ a=a.concat(CONNECT[l]); }); return a; }
+function capw(t){ return t.charAt(0).toUpperCase()+t.slice(1).toLowerCase(); }
+function estimateBits(n, N, o){
+  var b = n*Math.log2(N), tok = n;
+  if(o.struct !== 'words'){ b += Math.log2(startersFor(o).length); tok += 1; }
+  if(o.struct === 'conn'){ b += (n-1)*Math.log2(connFor(o).length); tok += n-1; }
+  if(o.kase === 'alt') b += 1;
+  if(o.kase === 'rand') b += tok*Math.log2(3);
+  if(o.sep === 'rand') b += (tok-1)*4;
+  b += o.digits*LOG2_10; if(o.sym) b += 4;
+  return b;
+}
+function chooseN(N, o){
+  if(o.n !== 'auto') return +o.n;
+  for(var n=2; n<=12; n++) if(estimateBits(n,N,o) >= o.target) return n;
+  return 12;
+}
+function generateOne(D, o, n){
+  var st = startersFor(o), cn = connFor(o), wb = Math.log2(D.length);
+  var tokens=[], kinds=[], bits=0, br=[];
+  if(o.struct !== 'words'){
+    pick(st).split(' ').forEach(function(t){ tokens.push(t); kinds.push('c'); });
+    var sb = Math.log2(st.length); bits += sb; br.push(['frase de inicio, '+st.length+' opciones', sb]);
+  }
+  for(var i=0;i<n;i++){
+    if(i>0 && o.struct==='conn'){ tokens.push(pick(cn)); kinds.push('c'); }
+    tokens.push(pick(D)); kinds.push('w');
+  }
+  bits += n*wb; br.push([n+' palabras × log₂('+D.length+') = '+n+' × '+fmt(wb,2), n*wb]);
+  if(o.struct==='conn' && n>1){ var cb=(n-1)*Math.log2(cn.length); bits+=cb; br.push([(n-1)+' conectores, '+cn.length+' opciones', cb]); }
+  var cased;
+  if(o.kase==='alt'){ var s0=randInt(2); cased=tokens.map(function(t,i){ return ((i+s0)%2===0)?t.toUpperCase():t.toLowerCase(); }); bits+=1; br.push(['empieza en mayúscula o minúscula',1]); }
+  else if(o.kase==='title'){ cased=tokens.map(capw); }
+  else if(o.kase==='rand'){ cased=tokens.map(function(t){ return [t.toUpperCase(),t.toLowerCase(),capw(t)][randInt(3)]; }); var kb=tokens.length*Math.log2(3); bits+=kb; br.push(['mayúsculas al azar en '+tokens.length+' bloques',kb]); }
+  else { cased=tokens.slice(); }
+  var pieces=[], wi=0;
+  cased.forEach(function(t,i){
+    if(i>0){ var sep = o.sep==='rand' ? pick(SYMS) : o.sep; if(sep) pieces.push({t:sep,k:'x'}); }
+    var k = kinds[i]; if(k==='w'){ k = (wi++%2===0)?'w1':'w2'; }
+    pieces.push({t:t,k:k});
+  });
+  if(o.sep==='rand'){ var pb=(cased.length-1)*4; bits+=pb; br.push([(cased.length-1)+' símbolos separadores, 16 opciones',pb]); }
+  if(o.digits>0){ var d=''; for(var j=0;j<o.digits;j++) d+=randInt(10); pieces.push({t:d,k:'x'}); var db=o.digits*LOG2_10; bits+=db; br.push([o.digits+' dígitos',db]); }
+  if(o.sym){ pieces.push({t:pick(SYMS),k:'x'}); bits+=4; br.push(['símbolo final, 16 opciones',4]); }
+  return {pw:pieces.map(function(p){return p.t;}).join(''), pieces:pieces, bits:bits, br:br};
+}
+function updateDictInfo(){
+  var o = opts(), D = dictFor(o);
+  Object.keys(THEMES).forEach(function(k){
+    var c = new Set(); langs(o.lang).forEach(function(l){ words(THEMES[k][l]).forEach(function(w){ c.add(w); }); });
+    var el = chipBox.querySelector('[data-n="'+k+'"]'); if(el) el.textContent = c.size;
+  });
+  if(D.length < 2){ $('#dictInfo').textContent = 'Elige al menos un tema o escribe dos palabras propias.'; return; }
+  var n = chooseN(D.length, o);
+  $('#dictInfo').innerHTML = 'El diccionario tiene <b>'+D.length.toLocaleString('es-CO')+'</b> palabras, así que cada una vale <b>'+fmt(Math.log2(D.length),2)+'</b> bits. '
+    + (o.n==='auto' ? 'Para llegar a <b>'+o.target+'</b> bits hacen falta <b>'+n+'</b> palabras.' : 'Con <b>'+n+'</b> palabras se llega a unos <b>'+fmt(estimateBits(n,D.length,o),1)+'</b> bits.');
+}
+function render(){
+  var o = opts(), D = dictFor(o), err = $('#genErr'), list = $('#cands');
+  updateDictInfo();
+  if(D.length < 2){ err.hidden=false; err.textContent='Elige al menos un tema o escribe dos palabras propias para generar.'; list.innerHTML=''; return; }
+  err.hidden = true;
+  var n = chooseN(D.length, o), html='';
+  for(var i=0;i<6;i++){
+    var g = generateOne(D, o, n), ce = classEntropy(g.pw), rt = rate(g.bits);
+    html += '<li>'
+      + '<div class="g-pw">'+g.pieces.map(function(p){ return '<span class="'+p.k+'">'+esc(p.t)+'</span>'; }).join('')+'</div>'
+      + '<div class="g-meta">'+stHTML(g.bits, fmt(g.bits,1)+' bits del generador, '+rt.label)
+      + '<span class="muted">La fórmula diría '+fmt(ce.E,1)+' bits (L '+ce.L+', R '+ce.R+')</span></div>'
+      + '<div class="g-foot"><details><summary>Cómo se suman los bits</summary><ul>'
+      + g.br.map(function(b){ return '<li>'+esc(b[0])+': '+fmt(b[1],2)+' bits</li>'; }).join('')
+      + '<li>Total: '+fmt(g.bits,2)+' bits</li></ul></details>'
+      + '<div class="btns"><button type="button" class="btn sm" data-copy="'+esc(g.pw)+'">Copiar</button>'
+      + '<button type="button" class="btn sm red" data-an="'+esc(g.pw)+'">Analizar</button></div></div>'
+      + '</li>';
+  }
+  list.innerHTML = html;
+}
+function toast(msg){ var t=$('#toast'); t.textContent=msg; t.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(function(){ t.hidden=true; }, 1600); }
+$('#cands').addEventListener('click', function(e){
+  var b = e.target.closest('button'); if(!b) return;
+  if(b.dataset.copy !== undefined){
+    var v = b.dataset.copy, done = function(){ toast('Contraseña copiada'); };
+    var fb = function(){
+      var ta=document.createElement('textarea'); ta.value=v; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select();
+      try{ document.execCommand('copy'); done(); }catch(x){ toast('Selecciona el texto y cópialo a mano'); }
+      document.body.removeChild(ta);
+    };
+    try{ navigator.clipboard.writeText(v).then(done, fb); }catch(x){ fb(); }
+  } else if(b.dataset.an !== undefined){
+    pwInput.type='text'; $('#toggle').textContent='Ocultar'; $('#toggle').setAttribute('aria-pressed','false');
+    pwInput.value = b.dataset.an; analyze(true);
+    document.getElementById('analizar').scrollIntoView({behavior: REDUCED ? 'auto' : 'smooth'});
+  }
+});
+$('#genForm').addEventListener('submit', function(e){ e.preventDefault(); render(); });
+$('#genForm').addEventListener('change', updateDictInfo);
+$('#custom').addEventListener('input', updateDictInfo);
+
+/* ---------- Referencias ---------- */
+var REFS = [
+  ['proton.me','¿Qué es la entropía de una contraseña?','https://proton.me/blog/what-is-password-entropy','La fórmula E = L × log₂(R) y las tablas de rangos de caracteres.'],
+  ['tecnocrypter.com','Calculadora de entropía','https://tecnocrypter.com/tools/calculadora-entropia','La referencia de mil millones de intentos por segundo.'],
+  ['hivesystems.com','Tabla de tiempos de fuerza bruta','https://www.hivesystems.com/password','La calibración del escenario bcrypt con 16 tarjetas RTX 5090.'],
+  ['explainxkcd.com','xkcd 936: Password Strength','https://www.explainxkcd.com/wiki/index.php/936:_Password_Strength','El ataque online de 1.000 intentos por segundo y la idea de frases de palabras.'],
+  ['github.com/dropbox','zxcvbn','https://github.com/dropbox/zxcvbn','El motor de la estimación realista: detecta palabras, años, secuencias y patrones de teclado.'],
+  ['bitwarden.com','Password Strength Tester','https://bitwarden.com/password-strength/','Otro medidor para medir la fuerza de tus contraseñas.'],
+  ['eff.org','Dice-generated passphrases','https://www.eff.org/dice','La lista de 7.776 palabras (12,9 bits por palabra) que inspira el generador.'],
+  ['haveibeenpwned.com','Pwned Passwords','https://haveibeenpwned.com/Passwords','Para saber si una contraseña ya apareció en filtraciones. No se integra aquí para no enviar datos.'],
+  ['pages.nist.gov','NIST SP 800-63B Rev. 4','https://pages.nist.gov/800-63-4/sp800-63b.html','Mínimo de 15 caracteres como único factor, sin caducidad forzada y con lista de contraseñas filtradas.']
+];
+$('#refs').innerHTML = REFS.map(function(r){
+  return '<tr><td><a href="'+r[2]+'" target="_blank" rel="noopener">'+r[1]+'</a><span class="host">'+r[0]+'</span></td><td>'+r[3]+'</td></tr>';
+}).join('');
+
+analyze(true);
+render();
+})();
+</script>
+</body>
+</html>
